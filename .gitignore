@@ -1,0 +1,45 @@
+# Local research, vendor assets, and personal/device data never belong in git.
+/images/
+/stock_restore/
+/usb_backups/
+/custom_*/
+/example_car_in_scenery/
+/TEST EXPORTS/
+/deps/
+/editor_deps/
+*.bin
+*.exe
+*.png
+*.nb4project
+/*.json
+/*.txt
+!requirements*.txt
+/*.md
+!README.md
+!CHANGELOG.md
+!USER_GUIDE.md
+!CONTRIBUTING.md
+!RELEASING.md
+!THIRD_PARTY_NOTICES.md
+!SECURITY.md
+!RELEASE_NOTES.md
+/.build-env/
+/.venv/
+/build/
+/dist/
+/release/
+/__pycache__/
+**/__pycache__/
+*.py[cod]
+*.spec
+/.vscode/
+/.idea/
+# Historical investigation scripts are retained locally, excluded from release.
+/analyze.py
+/decode_images.py
+/firmware_disasm.py
+/inspect_storage_usb.py
+/inspect_updater.py
+/plan_five_wallpapers.py
+/test_patcher.py
+/docs/INVESTIGATION.md
