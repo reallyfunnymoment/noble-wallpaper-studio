@@ -1,4 +1,4 @@
-# Noble Wallpaper Studio 0.1.0-beta.2
+# Noble Wallpaper Studio 0.1.0-beta.1
 
 A native Windows editor for the three stock FlySky Noble NB4+ wallpaper slots.
 
@@ -6,7 +6,7 @@ A native Windows editor for the three stock FlySky Noble NB4+ wallpaper slots.
 
 ## Download
 
-Download `NobleWallpaperStudio-0.1.0-beta.2-windows-x64.zip`, extract the entire
+Download `NobleWallpaperStudio-0.1.0-beta.1-windows-x64.zip`, extract the entire
 folder, and run `NobleWallpaperStudio.exe`. Python is included in the package.
 The source archive and SHA-256 files are supplied separately.
 
@@ -19,21 +19,12 @@ mode for USB uploads. Read USER_GUIDE.md for preparation and recovery.
 
 ## What's included
 
-New in beta.2: shrink images down to 0.1× with the slider, typed zoom values,
-or mouse wheel. Smaller images can be positioned on the black wallpaper canvas.
-Existing projects remain compatible.
-
 - Three-slot photo editor with crop, zoom, fine rotation, mirror, and color controls.
 - Typed numeric adjustments, embedded-image projects, and 320 × 398 PNG export.
 - Direct USB uploads, verified recovery snapshots, and centered progress.
 - Theme matching and optional consistent Character artwork.
 
 ## Beta validation and limits
-
-The saved-baseline requirement remains in this update. Direct backup that
-preserves previous custom wallpapers is under investigation and has not yet
-been verified on hardware. When moving to another PC, transfer your recovery
-sessions as described in USER_GUIDE.md.
 
 The original three-slot USB route was hardware tested: all 65 changed blocks
 and the complete resource passed CRC verification, and the Scenery display was

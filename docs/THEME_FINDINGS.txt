@@ -1,0 +1,46 @@
+NB4+ EN 1.0.31-4: wallpaper/theme behavior (offline firmware analysis)
+
+Observed by the user: changing transmitter themes changes all wallpaper slots,
+including photo colors. No radio writes were performed during this investigation.
+
+The theme list at code address 0x080965a8 contains four (string ID, theme ID)
+pairs: 0x2ff/0, 0x300/1, 0x301/2, 0x302/3. The English string dictionary entries
+at 0x080981b8 through 0x080981d0 resolve these to Technology Cyan, Vibrant Yellow,
+Bright Red, and Fresh Blue, in that order.
+
+Theme selection at 0x080805b0 updates the configuration byte at offset 0x3f and
+calls the LCD driver's theme callback through *[0x2000083c] + 0x10. The nine panel
+records start at code address 0x080caf34, stride 40. The callbacks change global
+panel color-mode registers: neighboring theme IDs toggle R/B order, and IDs
+2/3 toggle inversion relative to IDs 0/1. Example callbacks are 0x08047e70,
+0x0804984c, 0x08049bf0, and 0x080492e8. Different panels use different absolute
+command parameters, but the relative color changes are the same in these paths.
+Raw wallpaper pixels are copied without a per-theme software correction.
+
+Editor compensation, relative to Technology Cyan:
+  0 Technology Cyan: identity
+  1 Vibrant Yellow: swap red and blue
+  2 Bright Red: invert RGB
+  3 Fresh Blue: invert RGB and swap red and blue
+These transforms are self-inverse. Compensation is applied before RGB565
+encoding and before transparent-key avoidance. Previews transform the encoded
+pixels back to the expected displayed colors. All slots use one project theme.
+Software checks cover every RGB565 color and the transparent key in each theme.
+The selected-theme result still requires a real transmitter display check.
+
+There is a second, separate artwork issue: the Character slot uses image ID
+0x112 normally and 0x114 in themes 2/3. Selection code includes 0x0808b180.
+The latter image is a different stock portrait, descriptor 0x134c, resource
+pixels 0x4fc1d6..0x53a4d6 (end exclusive). The normal Character descriptor is
+0x132c and pixels start at 0x47fbd6. Both are 320x398 RGB565 with fixed size.
+Keep Character artwork consistent writes the same compensated photo into both.
+The USB planner permits that additional bounded artwork region; unrelated
+resources and application firmware remain excluded.
+
+Data-only limitations:
+A single stored RGB565 photo cannot cancel different global color transforms
+at once. Matching the editor setting to the radio's selected theme and uploading
+again is the implemented workaround. Keeping arbitrary photos unchanged while
+switching themes would require a firmware drawing change or per-theme assets
+plus firmware selection support. This editor does not modify application code
+or change the transmitter's theme configuration.

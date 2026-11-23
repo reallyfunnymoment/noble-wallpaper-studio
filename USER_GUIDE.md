@@ -10,9 +10,6 @@ EN 1.0.31-4 updater package.
 2. Import a photo. PNG, JPEG, WebP, BMP, and TIFF are supported.
 3. Use **Fill** to crop or **Fit** to keep the full image with black padding.
 4. Drag the preview to position it. Use the wheel or slider to zoom.
-   Zoom ranges from 0.1× to 4×. Type `0.5` for half size or `0.25` for quarter
-   size; shrinking adds black space around the image. The wallpaper canvas
-   stays 320 × 398, and you can drag the smaller image to position it.
 5. Adjust rotation, brightness, contrast, color, and sharpness. You can type
    values and press Enter or Tab; rotation arrows step by 0.1 degrees.
 6. Save a `.nb4project` to keep all three original images and adjustments.

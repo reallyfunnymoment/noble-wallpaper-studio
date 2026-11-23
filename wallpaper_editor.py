@@ -152,7 +152,7 @@ class Editor(tk.Tk):
         combo.pack(side='right')
         combo.bind('<<ComboboxSelected>>', lambda e: self.change())
         for key, label, low, high in [('rotation', 'Rotation (degrees)', -180, 180),
-                                      ('zoom', 'Zoom (0.1–4×)', 0.1, 4), ('x', 'Horizontal position', 0, 1),
+                                      ('zoom', 'Zoom', 1, 4), ('x', 'Horizontal position', 0, 1),
                                       ('y', 'Vertical position', 0, 1), ('brightness', 'Brightness', 0, 2),
                                       ('contrast', 'Contrast', 0, 2), ('saturation', 'Color', 0, 2),
                                       ('sharpness', 'Sharpness', 0, 3)]:
@@ -349,7 +349,7 @@ class Editor(tk.Tk):
         self.change()
 
     def wheel(self, event):
-        self.variables['zoom'].set(max(0.1, min(4, round(self.variables['zoom'].get() + (0.1 if event.delta > 0 else -0.1), 6))))
+        self.variables['zoom'].set(max(1, min(4, self.variables['zoom'].get() + (0.1 if event.delta > 0 else -0.1))))
         self.change()
 
     def rotate(self):

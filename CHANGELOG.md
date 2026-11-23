@@ -1,13 +1,5 @@
 # Changelog
 
-## 0.1.0-beta.2
-
-- Allow shrinking images down to 0.1× using the zoom slider, typed values, or
-  mouse wheel. Black padding fills the remaining 320 × 398 canvas.
-- Preserve small-image positioning and zoom settings in saved projects.
-- Keep the existing 1.0.31-only USB safeguards. Direct backup without a saved
-  baseline remains experimental and is not included in this release.
-
 ## 0.1.0-beta.1
 
 - Native Windows editor for the three existing NB4+ wallpaper slots.
