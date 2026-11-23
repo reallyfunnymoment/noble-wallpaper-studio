@@ -27,7 +27,7 @@ For this release:
    assets. Verify editing works without a reference and canceling setup is safe.
 4. On compatible hardware, check theme-compensated display before claiming it
    is device verified. Leave the documented beta limit in place until then.
-5. Create a GitHub release tagged `v0.1.0-beta.1`, mark it **Pre-release**, paste
+5. Create a GitHub release tagged `v0.1.0-beta.2`, mark it **Pre-release**, paste
    RELEASE_NOTES.md, and attach both zips and their `.sha256` files.
 
 The application is not code-signed. Keep the checksum files with the artifacts.

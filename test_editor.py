@@ -13,6 +13,31 @@ UPDATER = original_updater_path()
 
 
 class EditorTests(unittest.TestCase):
+    def test_shrinking_image_keeps_black_padding_and_positioning(self):
+        image = Image.new('RGB', (WIDTH, HEIGHT), 'red')
+        for fit in ('Fill', 'Fit'):
+            with self.subTest(fit=fit):
+                centered = render(image, dict(DEFAULTS, zoom=0.5, fit=fit))
+                self.assertEqual(centered.size, (WIDTH, HEIGHT))
+                self.assertEqual(centered.getpixel((0, 0)), (0, 0, 0))
+                self.assertEqual(centered.getpixel((160, 199)), (255, 0, 0))
+                self.assertEqual(centered.getbbox(), (80, 100, 240, 299))
+                corner = render(image, dict(DEFAULTS, zoom=0.5, fit=fit, x=0, y=0))
+                self.assertEqual(corner.getbbox(), (0, 0, 160, 199))
+
+    def test_small_zoom_project_roundtrip_and_lower_bound(self):
+        slots = stock_project()
+        slots['model']['settings']['zoom'] = 0.1
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'small.nb4project'
+            save_project(path, slots)
+            self.assertEqual(load_project(path)['model']['settings']['zoom'], 0.1)
+            payload = json.loads(path.read_text())
+            payload['slots']['model']['settings']['zoom'] = 0.09
+            path.write_text(json.dumps(payload))
+            with self.assertRaisesRegex(ValueError, 'zoom'):
+                load_project(path)
+
     def test_crop_position_and_fit_padding(self):
         image = Image.new('RGB', (640, 398), 'red')
         image.paste('blue', (320, 0, 640, 398))

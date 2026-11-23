@@ -152,7 +152,7 @@ def load_project(path):
     slots = {}
     for slot, entry in payload['slots'].items():
         settings = dict(DEFAULTS, **entry['settings'])
-        ranges = dict(zoom=(1, 4), x=(0, 1), y=(0, 1), brightness=(0, 2),
+        ranges = dict(zoom=(0.1, 4), x=(0, 1), y=(0, 1), brightness=(0, 2),
                       contrast=(0, 2), saturation=(0, 2), sharpness=(0, 3))
         for key, (low, high) in ranges.items():
             if not isinstance(settings[key], (int, float)) or not low <= settings[key] <= high:

@@ -6,7 +6,7 @@ A native Windows wallpaper editor and USB uploader for the FlySky Noble NB4+.
 transmitter models are unsupported. The exact reference package is the unchanged
 Noble NB4+ EN 1.0.31-4 updater; its suffix identifies the reference package.
 
-**Status: 0.1.0-beta.1 · Windows x64 · MIT licensed**
+**Status: 0.1.0-beta.2 · Windows x64 · MIT licensed**
 
 ## Get started
 
