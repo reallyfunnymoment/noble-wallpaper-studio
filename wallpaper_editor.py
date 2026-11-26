@@ -74,7 +74,7 @@ class Editor(tk.Tk):
         header = ttk.Frame(self, padding=(22, 16))
         header.pack(fill='x')
         ttk.Label(header, text='Noble Wallpaper Studio', style='Title.TLabel').pack(side='left')
-        ttk.Label(header, text=f'{VERSION}  •  NB4+  •  Firmware 1.0.31 only').pack(side='right')
+        ttk.Label(header, text=f'{VERSION}  •  NB4+ EN/EU  •  Firmware 1.0.31 only').pack(side='right')
         toolbar = ttk.Frame(self, padding=(22, 0, 22, 12))
         toolbar.pack(fill='x')
         for label, command in [('New', self.new), ('Open project…', self.open),
@@ -152,7 +152,7 @@ class Editor(tk.Tk):
         combo.pack(side='right')
         combo.bind('<<ComboboxSelected>>', lambda e: self.change())
         for key, label, low, high in [('rotation', 'Rotation (degrees)', -180, 180),
-                                      ('zoom', 'Zoom', 1, 4), ('x', 'Horizontal position', 0, 1),
+                                      ('zoom', 'Zoom (0.1–4×)', 0.1, 4), ('x', 'Horizontal position', 0, 1),
                                       ('y', 'Vertical position', 0, 1), ('brightness', 'Brightness', 0, 2),
                                       ('contrast', 'Contrast', 0, 2), ('saturation', 'Color', 0, 2),
                                       ('sharpness', 'Sharpness', 0, 3)]:
@@ -239,7 +239,7 @@ class Editor(tk.Tk):
     def setup_reference(self):
         if self.busy or self.usb_busy or self.radio_busy:
             return False
-        path = filedialog.askopenfilename(parent=self, title='Choose original Noble NB4+ EN 1.0.31-4 updater',
+        path = filedialog.askopenfilename(parent=self, title='Choose original Noble NB4+ EN or EU 1.0.31-4 updater',
                                          filetypes=[('FlySky updater', '*.exe')])
         if not path:
             return False
@@ -264,7 +264,7 @@ class Editor(tk.Tk):
             return True
         except (OSError, ValueError):
             messagebox.showinfo('Firmware reference required',
-                                'Select your unchanged Noble NB4+ EN 1.0.31-4 updater. '
+                                'Select your unchanged Noble NB4+ EN or EU 1.0.31-4 updater. '
                                 'The editor reads its reference data without running it.', parent=self)
             return self.setup_reference()
 
@@ -349,7 +349,7 @@ class Editor(tk.Tk):
         self.change()
 
     def wheel(self, event):
-        self.variables['zoom'].set(max(1, min(4, self.variables['zoom'].get() + (0.1 if event.delta > 0 else -0.1))))
+        self.variables['zoom'].set(max(0.1, min(4, round(self.variables['zoom'].get() + (0.1 if event.delta > 0 else -0.1), 6))))
         self.change()
 
     def rotate(self):
@@ -562,12 +562,20 @@ class Editor(tk.Tk):
 
     def _usb_worker(self, job, operation):
         self._usb_state(True)
-        self.transfer_window = TransferProgress(self, job)
+        cancel_event = threading.Event()
+        self.prepare_cancel_event = cancel_event if job == 'prepared' else None
+        self.transfer_window = TransferProgress(self, job, cancel_event.set if job == 'prepared' else None)
         self.transfer_window.update_message('Preparing images and checking the radio…' if job == 'prepared'
                                              else 'Checking the saved transfer and radio…')
         def worker():
             try:
-                result = operation(lambda message: self.usb_results.put(('progress', message)))
+                def progress(message):
+                    if cancel_event.is_set():
+                        raise RuntimeError('Preparation canceled. No wallpaper data was written. Verified backup blocks are kept so you can resume later.')
+                    self.usb_results.put(('progress', message))
+                result = operation(progress)
+                if cancel_event.is_set():
+                    raise RuntimeError('Preparation canceled. No wallpaper data was written.')
                 self.usb_results.put((job, result))
             except Exception as error:
                 self.usb_results.put(('error', str(error)))
@@ -642,6 +650,9 @@ class Editor(tk.Tk):
                 self.status.set('USB operation stopped. See the error and recovery information.')
                 messagebox.showerror('USB operation stopped', result)
             elif kind == 'prepared':
+                if self.prepare_cancel_event is not None and self.prepare_cancel_event.is_set():
+                    self.status.set('Preparation canceled. No wallpaper data was written.')
+                    continue
                 folder, manifest, names, theme = result
                 if not manifest['blocks']:
                     self.status.set('The radio already matches these wallpapers. No upload needed.')

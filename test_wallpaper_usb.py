@@ -82,6 +82,20 @@ class UploadTests(unittest.TestCase):
         self.assertEqual(result['state'], 'restored')
         self.assertEqual(self.flash[usb.RESOURCE_FLASH_START:usb.RESOURCE_END], self.baseline)
 
+    def test_upload_and_restore_preserve_unfamiliar_laptop_wallpapers(self):
+        laptop = bytearray(self.baseline)
+        laptop[SLOTS['scenery'][1]+17] = 0x7b
+        struct.pack_into('<I', laptop, len(laptop)-4, crc32_nonref(reverse_words(laptop[:-4])))
+        self.flash[usb.RESOURCE_FLASH_START:usb.RESOURCE_END] = laptop
+        with patch.object(usb, 'read_stock_resource', return_value=self.baseline):
+            folder, _ = usb.prepare_upload(self.target)
+        self.assertEqual(self.writes, [])
+        self.assertEqual((folder/'baseline.bin').read_bytes(), laptop)
+        usb.execute_upload(folder, confirmed=True)
+        self.assertEqual(self.flash[usb.RESOURCE_FLASH_START:usb.RESOURCE_END], self.target)
+        usb.execute_upload(folder, confirmed=True, restore=True)
+        self.assertEqual(self.flash[usb.RESOURCE_FLASH_START:usb.RESOURCE_END], laptop)
+
     def test_non_erased_adjacent_bytes_stop_preparation(self):
         self.flash[usb.RESOURCE_END] = 0
         with self.assertRaisesRegex(ValueError, 'padding'):

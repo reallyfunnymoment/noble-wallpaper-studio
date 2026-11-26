@@ -6,10 +6,12 @@ checked against device CRCs, not raw device dumps. No request is sent on import.
 """
 import hashlib
 import json
+import os
 from pathlib import Path
 import secrets
 import struct
 import time
+import tempfile
 import zlib
 from patch_wallpaper import RESOURCE_LENGTH, validate_resource
 from radio_info_probe import probe, probe_resource_crc, _exchange_validated, REPORT_BYTES
@@ -86,9 +88,23 @@ def identify_baseline(progress=lambda message: None):
         actual = result['returned_crc_word']
         checks.append(dict(offset=offset, bytes=length, crc=actual))
         available = [(path, data) for path, data in available if crc(data[offset:offset+length]) == actual]
-        if not available:
-            raise ValueError('Radio data does not match any saved baseline. No write is allowed.')
         progress(f'Checking radio data: {index+1}/{total}')
+    if not available:
+        from live_backup import recover_resource
+        progress('Reading your current wallpapers for recovery. A first backup on this PC can take 45 minutes or longer; verified blocks are saved for resuming.')
+        data = recover_resource(read_stock_resource(), probe_resource_crc, BACKUPS/'read_cache', progress)
+        folder = BACKUPS/('discovered-'+digest(data)[:20])
+        folder.mkdir(parents=True, exist_ok=True)
+        path = folder/'baseline.bin'
+        fd, temporary = tempfile.mkstemp(prefix='.baseline-', dir=folder)
+        try:
+            with os.fdopen(fd, 'wb') as stream:
+                stream.write(data)
+            os.replace(temporary, path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
+        return path, data, checks
     path, data = available[0]
     return path, data, checks
 
@@ -122,7 +138,7 @@ def prepare_upload(target, progress=lambda message: None):
     (folder/'target.bin').write_bytes(target)
     manifest = dict(version=1, state='prepared', source_path=str(path), baseline_sha256=digest(baseline),
                     target_sha256=digest(target), plan=plan, resource_checks=checks,
-                    backup_type='Reconstructed from known local baseline; every affected full block verified using device CRC.',
+                    backup_type='Verified local reference or live-read wallpaper baseline; every affected full block verified using device CRC.',
                     blocks=[dict(address=address, before_sha256=digest(before), after_sha256=digest(after),
                                  before_crc=crc(before), after_crc=crc(after)) for address, before, after in snapshots])
     for address, before, after in snapshots:

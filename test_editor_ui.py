@@ -7,6 +7,21 @@ from transfer_progress import TransferProgress
 
 
 class EditorUITests(unittest.TestCase):
+    def test_zoom_wheel_and_typing_can_shrink_below_one(self):
+        from types import SimpleNamespace
+        editor = self.editor
+        editor.wheel(SimpleNamespace(delta=-120))
+        self.assertAlmostEqual(editor.slots['model']['settings']['zoom'], 0.9)
+        editor.numeric_inputs['zoom'][0].set('0.25')
+        editor.commit_number('zoom')
+        self.assertEqual(editor.slots['model']['settings']['zoom'], 0.25)
+        for _ in range(5):
+            editor.wheel(SimpleNamespace(delta=-120))
+        self.assertEqual(editor.slots['model']['settings']['zoom'], 0.1)
+        editor.select('scenery')
+        editor.select('model')
+        self.assertEqual(editor.variables['zoom'].get(), 0.1)
+
     def setUp(self):
         self.editor = Editor()
         self.editor.withdraw()
@@ -65,6 +80,17 @@ class EditorUITests(unittest.TestCase):
         worker.assert_not_called()
         self.assertFalse(self.editor.usb_busy)
         self.assertEqual(len(self.editor.slots), 3)
+
+    def test_preparation_progress_can_request_cancel(self):
+        import threading
+        event = threading.Event()
+        window = TransferProgress(self.editor, 'prepared', event.set)
+        try:
+            window.cancel_button.invoke()
+            self.assertTrue(event.is_set())
+            self.assertTrue(window.cancel_button.instate(['disabled']))
+        finally:
+            window.destroy()
 
 
 if __name__ == '__main__':

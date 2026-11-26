@@ -14,6 +14,9 @@ def stock_resource_path():
 
 
 def original_updater_path():
+    active = DATA_DIR/'reference'/'original_updater.exe'
+    if active.is_file():
+        return active
     installed = DATA_DIR/'reference'/'Flysky_Noble+Plus+EN_UpdateFirmware_1.0.31-4.exe'
     legacy = ROOT/'stock_restore'/'Flysky_Noble+Plus+EN_UpdateFirmware_1.0.31-4.exe'
     return installed if installed.is_file() or not legacy.is_file() else legacy

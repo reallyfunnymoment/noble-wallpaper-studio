@@ -7,6 +7,27 @@ from png_codec import save_png
 UPDATER_SHA256 = '522eeaeecc4ba120d08229ba6f12c828935c6ae61a45f002681d64c60bdfb4c5'
 RESOURCE_OFFSET = 908680
 RESOURCE_LENGTH = 5695344
+RESOURCE_SHA256 = '71a09fb94b656de17028ee35441dcbd0ba1b37735330eea4ea8f3f1911dab825'
+SUPPORTED_UPDATERS = {
+    UPDATER_SHA256: dict(region='EN', offset=RESOURCE_OFFSET,
+                        filename='Flysky_Noble+Plus+EN_UpdateFirmware_1.0.31-4.exe'),
+    '1b119de1e2a0efa9787f3db3fd9abe01cd16b4a7f4069d254dcf8b9e46b90b72':
+        dict(region='EU', offset=908688,
+             filename='Flysky_Noble+Plus+EU_UpdateFirmware_1.0.31-4.exe'),
+}
+
+
+def extract_reference(updater):
+    digest = hashlib.sha256(updater).hexdigest()
+    if digest not in SUPPORTED_UPDATERS:
+        raise ValueError('Updater must match an unchanged Noble NB4+ EN or EU 1.0.31-4 package; this file does not match.')
+    profile = dict(SUPPORTED_UPDATERS[digest], sha256=digest)
+    offset = profile['offset']
+    data = updater[offset:offset+RESOURCE_LENGTH]
+    if hashlib.sha256(data).hexdigest() != RESOURCE_SHA256:
+        raise ValueError('The updater resource does not match the supported reference.')
+    validate_resource(data)
+    return data, profile
 WIDTH, HEIGHT = 320, 398
 SLOTS = {'model': (0x131c, 0x4418d6), 'character': (0x132c, 0x47fbd6), 'scenery': (0x133c, 0x4bded6)}
 CHARACTER_THEME_SLOT = (0x134c, 0x4fc1d6)
@@ -115,15 +136,18 @@ def main():
     parser.add_argument('--output-dir',type=Path,required=True)
     args=parser.parse_args()
     updater=args.updater.read_bytes()
-    if hashlib.sha256(updater).hexdigest()!=UPDATER_SHA256:parser.error('Updater does not match the inspected 1.0.31-4 package')
-    original=updater[RESOURCE_OFFSET:RESOURCE_OFFSET+RESOURCE_LENGTH]
+    try:
+        original, profile = extract_reference(updater)
+    except ValueError as error:
+        parser.error(str(error))
     result,preview,adjusted=patch_resource(original,read_png(args.image),args.slot)
     args.output_dir.mkdir(parents=True,exist_ok=True)
     output=args.output_dir/'FS_FG4_CN_Data.bin'
     if output.exists():parser.error(f'Output already exists: {output}. Choose a new directory.')
     output.write_bytes(result)
     save_png(args.output_dir/'wallpaper_preview.png',WIDTH,HEIGHT,preview)
-    report=dict(slot=args.slot,width=WIDTH,height=HEIGHT,source_updater_sha256=UPDATER_SHA256,
+    report=dict(slot=args.slot,width=WIDTH,height=HEIGHT,source_updater_sha256=profile['sha256'],
+        reference_region=profile['region'],
         data_sha256=hashlib.sha256(result).hexdigest(),data_crc32=hex(struct.unpack_from('<I',result,len(result)-4)[0]),
         image_offset=hex(SLOTS[args.slot][1]),image_bytes=WIDTH*HEIGHT*2,color_key_pixels_adjusted=adjusted,
         validation='Original CRC reproduced; output CRC verified; only selected pixels and trailing CRC changed.',

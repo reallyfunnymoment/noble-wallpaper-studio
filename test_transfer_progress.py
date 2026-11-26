@@ -3,6 +3,10 @@ from transfer_progress import progress_value
 
 
 class ProgressTests(unittest.TestCase):
+    def test_live_backup_stages(self):
+        self.assertEqual(progress_value('Inspecting backup blocks: 1/2', 'prepared'), 25)
+        self.assertEqual(progress_value('Backing up current wallpapers: 1/2 (about 4 min remaining)', 'prepared'), 55)
+        self.assertEqual(progress_value('Checking recovered data: 1/2', 'prepared'), 85)
     def test_stages_advance_through_complete_upload_and_restore(self):
         for mode, start, done in [('uploaded', 'Uploading', 'Uploaded'),
                                   ('restored', 'Restoring', 'Restored')]:

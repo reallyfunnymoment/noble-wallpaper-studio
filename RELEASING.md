@@ -5,7 +5,7 @@ Use Windows x64 with Python 3.14 and Tk support.
 ```powershell
 py -3.14 -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements-build.txt
-.\.venv\Scripts\python -B -m unittest test_editor test_editor_ui test_release test_radio_protocol test_transfer_progress test_usb_wallpaper_plan test_wallpaper_usb -v
+.\.venv\Scripts\python -B -m unittest test_editor test_editor_ui test_release test_radio_protocol test_transfer_progress test_usb_wallpaper_plan test_wallpaper_usb test_crc_readback test_live_backup test_eu_reference -v
 .\.venv\Scripts\python tools/prepare_release.py
 .\.venv\Scripts\python tools/build_windows.py
 ```
@@ -27,7 +27,7 @@ For this release:
    assets. Verify editing works without a reference and canceling setup is safe.
 4. On compatible hardware, check theme-compensated display before claiming it
    is device verified. Leave the documented beta limit in place until then.
-5. Create a GitHub release tagged `v0.1.0-beta.1`, mark it **Pre-release**, paste
+5. Create a GitHub release tagged `v0.1.0-beta.2`, mark it **Pre-release**, paste
    RELEASE_NOTES.md, and attach both zips and their `.sha256` files.
 
 The application is not code-signed. Keep the checksum files with the artifacts.

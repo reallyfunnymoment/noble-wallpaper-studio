@@ -4,9 +4,9 @@ A native Windows wallpaper editor and USB uploader for the FlySky Noble NB4+.
 
 **Currently supports firmware 1.0.31 only.** Other firmware versions and other
 transmitter models are unsupported. The exact reference package is the unchanged
-Noble NB4+ EN 1.0.31-4 updater; its suffix identifies the reference package.
+Noble NB4+ EN or EU 1.0.31-4 updater; its suffix identifies the reference package.
 
-**Status: 0.1.0-beta.1 · Windows x64 · MIT licensed**
+**Status: 0.1.0-beta.2 · Windows x64 · MIT licensed**
 
 ## Get started
 
@@ -14,7 +14,7 @@ Noble NB4+ EN 1.0.31-4 updater; its suffix identifies the reference package.
 2. Extract the entire folder and run `NobleWallpaperStudio.exe`.
 3. Choose a slot and import a photo. No Python installation is needed.
 4. For USB uploads or stock images, select **Import firmware reference** and
-   choose your original Noble NB4+ EN 1.0.31-4 updater. The app verifies and reads
+   choose your original Noble NB4+ EN or EU 1.0.31-4 updater. The app verifies and reads
    it as data; it never runs the updater.
 5. Put the radio in **System → Firmware Update** mode, choose **Upload wallpapers
    via USB**, review the prepared changes, and confirm.
@@ -37,12 +37,19 @@ See [USER_GUIDE.md](USER_GUIDE.md) for setup, theme matching, uploads, and recov
 
 ## Compatibility and beta limits
 
-**Firmware 1.0.31 only.** The reference updater must have SHA-256:
+**Firmware 1.0.31 only.** The EN reference updater SHA-256 is:
 
     522eeaeecc4ba120d08229ba6f12c828935c6ae61a45f002681d64c60bdfb4c5
 
+The EN and EU packages use identical wallpaper data. The EU updater SHA-256 is:
+
+    1b119de1e2a0efa9787f3db3fd9abe01cd16b4a7f4069d254dcf8b9e46b90b72
+
+Both profiles are explicitly verified; EU transmitter operation still needs a
+hardware check. See [EU compatibility](docs/EU_COMPATIBILITY.md).
+
 Version metadata is checked before USB preparation and again before programming.
-Unknown resource baselines stop preparation before writes. Uploads are confined
+Unfamiliar wallpapers are automatically backed up before writes; unrelated data changes are rejected. Uploads are confined
 to wallpaper data and its checksum; application-code writes are excluded.
 
 The original data-only upload passed verification on hardware, and the Scenery

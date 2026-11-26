@@ -29,12 +29,12 @@ def build():
     subprocess.run([
         sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean',
         '--onedir', '--windowed', '--name', 'NobleWallpaperStudio',
-        '--distpath', str(output/'windows'), '--workpath', str(work/'work'),
+        '--distpath', str(output/'windows'/VERSION), '--workpath', str(work/'work'),
         '--specpath', str(work), '--exclude-module', 'matplotlib',
         '--exclude-module', 'numpy', '--exclude-module', 'capstone',
         str(ROOT/'wallpaper_editor.py'),
     ], cwd=ROOT, check=True, env=environment)
-    return package(output/'windows'/'NobleWallpaperStudio')
+    return package(output/'windows'/VERSION/'NobleWallpaperStudio')
 
 
 def package(folder):
@@ -78,7 +78,7 @@ def package(folder):
 
 if __name__ == '__main__':
     if sys.argv[1:] == ['--package-only']:
-        package(ROOT/'dist'/'windows'/'NobleWallpaperStudio')
+        package(ROOT/'dist'/'windows'/VERSION/'NobleWallpaperStudio')
     elif sys.argv[1:]:
         raise SystemExit('Usage: build_windows.py [--package-only]')
     else:

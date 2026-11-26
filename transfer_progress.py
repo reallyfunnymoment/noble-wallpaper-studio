@@ -13,6 +13,12 @@ def progress_value(message, mode):
     current, total = int(match[1]), int(match[2])
     fraction = max(0, min(1, current/total))
     if mode == 'prepared':
+        if message.startswith('Inspecting backup blocks:'):
+            return 20+10*fraction
+        if message.startswith('Backing up current wallpapers:'):
+            return 30+50*fraction
+        if message.startswith('Checking recovered data:'):
+            return 80+10*fraction
         if message.startswith('Checking radio data:'):
             return 20*fraction
         if message.startswith('Checking affected blocks:'):
@@ -30,7 +36,7 @@ def progress_value(message, mode):
 
 
 class TransferProgress(tk.Toplevel):
-    def __init__(self, parent, mode):
+    def __init__(self, parent, mode, on_cancel=None):
         super().__init__(parent)
         self.mode = mode
         self.started = time.monotonic()
@@ -56,6 +62,13 @@ class TransferProgress(tk.Toplevel):
         self.detail.pack(anchor='w')
         self.elapsed = ttk.Label(panel)
         self.elapsed.pack(anchor='w', pady=(12, 0))
+        if on_cancel is not None:
+            def cancel():
+                on_cancel()
+                self.cancel_button.configure(state='disabled', text='Canceling preparation…')
+            self.cancel_button = ttk.Button(panel, text='Cancel preparation (no writes)', command=cancel)
+            self.cancel_button.pack(anchor='w', pady=(12, 0))
+            self.protocol('WM_DELETE_WINDOW', cancel)
         if mode != 'export':
             ttk.Label(panel, text='Keep USB and transmitter power connected.').pack(anchor='w', pady=(8, 0))
         self.update_idletasks()
@@ -70,6 +83,7 @@ class TransferProgress(tk.Toplevel):
         value = progress_value(message, self.mode)
         if value is not None:
             self.bar.stop()
+            value = max(float(self.bar.cget('value')) if str(self.bar.cget('mode')) == 'determinate' else 0, value)
             self.bar.configure(mode='determinate', value=value)
             self.percent.configure(text=f'{int(value)}%')
 

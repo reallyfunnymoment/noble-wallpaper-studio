@@ -6,13 +6,38 @@ from pathlib import Path
 from editor_core import (ROOT, DEFAULTS, SLOTS, WIDTH, HEIGHT, Image, render,
                          normalize_image, quantize_preview, stock_project,
                          save_project, load_project, export_package, theme_transform, project_theme)
-from patch_wallpaper import RESOURCE_OFFSET, RESOURCE_LENGTH, validate_resource, CHARACTER_THEME_SLOT
+from patch_wallpaper import RESOURCE_OFFSET, RESOURCE_LENGTH, validate_resource, CHARACTER_THEME_SLOT, extract_reference
 from app_paths import original_updater_path
 
 UPDATER = original_updater_path()
 
 
 class EditorTests(unittest.TestCase):
+    def test_shrinking_image_keeps_black_padding_and_positioning(self):
+        image = Image.new('RGB', (WIDTH, HEIGHT), 'red')
+        for fit in ('Fill', 'Fit'):
+            with self.subTest(fit=fit):
+                centered = render(image, dict(DEFAULTS, zoom=0.5, fit=fit))
+                self.assertEqual(centered.size, (WIDTH, HEIGHT))
+                self.assertEqual(centered.getpixel((0, 0)), (0, 0, 0))
+                self.assertEqual(centered.getpixel((160, 199)), (255, 0, 0))
+                self.assertEqual(centered.getbbox(), (80, 100, 240, 299))
+                corner = render(image, dict(DEFAULTS, zoom=0.5, fit=fit, x=0, y=0))
+                self.assertEqual(corner.getbbox(), (0, 0, 160, 199))
+
+    def test_small_zoom_project_roundtrip_and_lower_bound(self):
+        slots = stock_project()
+        slots['model']['settings']['zoom'] = 0.1
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/'small.nb4project'
+            save_project(path, slots)
+            self.assertEqual(load_project(path)['model']['settings']['zoom'], 0.1)
+            payload = json.loads(path.read_text())
+            payload['slots']['model']['settings']['zoom'] = 0.09
+            path.write_text(json.dumps(payload))
+            with self.assertRaisesRegex(ValueError, 'zoom'):
+                load_project(path)
+
     def test_crop_position_and_fit_padding(self):
         image = Image.new('RGB', (640, 398), 'red')
         image.paste('blue', (320, 0, 640, 398))
@@ -117,7 +142,7 @@ class EditorTests(unittest.TestCase):
             destination = Path(folder) / 'package'
             report = export_package(destination, slots, UPDATER)
             result = (destination / 'FS_FG4_CN_Data.bin').read_bytes()
-            original = UPDATER.read_bytes()[RESOURCE_OFFSET:RESOURCE_OFFSET+RESOURCE_LENGTH]
+            original, profile = extract_reference(UPDATER.read_bytes())
             validate_resource(result)
             cursor = 0
             for slot, (_, offset) in SLOTS.items():
@@ -140,7 +165,7 @@ class EditorTests(unittest.TestCase):
             cursor = alternate+WIDTH*HEIGHT*2
             self.assertEqual(result[cursor:-4], original[cursor:-4])
             self.assertFalse(report['device_tested'])
-            self.assertEqual((destination / UPDATER.name).read_bytes(), UPDATER.read_bytes())
+            self.assertEqual((destination / profile['filename']).read_bytes(), UPDATER.read_bytes())
             self.assertEqual(set(load_project(destination / 'wallpapers.nb4project')), set(SLOTS))
             with self.assertRaisesRegex(ValueError, 'already exists'):
                 export_package(destination, slots, UPDATER)

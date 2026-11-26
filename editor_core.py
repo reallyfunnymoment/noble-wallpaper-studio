@@ -17,6 +17,7 @@ from firmware_reference import read_stock_resource
 from patch_wallpaper import (SLOTS, WIDTH, HEIGHT, UPDATER_SHA256,
                              RESOURCE_OFFSET, RESOURCE_LENGTH, patch_resource,
                              validate_resource, patch_character_theme, CHARACTER_THEME_SLOT)
+from patch_wallpaper import extract_reference
 
 DEFAULTS = dict(zoom=1.0, x=0.5, y=0.5, rotation=0, flip=False,
                 brightness=1.0, contrast=1.0, saturation=1.0, sharpness=1.0,
@@ -152,7 +153,7 @@ def load_project(path):
     slots = {}
     for slot, entry in payload['slots'].items():
         settings = dict(DEFAULTS, **entry['settings'])
-        ranges = dict(zoom=(1, 4), x=(0, 1), y=(0, 1), brightness=(0, 2),
+        ranges = dict(zoom=(0.1, 4), x=(0, 1), y=(0, 1), brightness=(0, 2),
                       contrast=(0, 2), saturation=(0, 2), sharpness=(0, 3))
         for key, (low, high) in ranges.items():
             if not isinstance(settings[key], (int, float)) or not low <= settings[key] <= high:
@@ -181,9 +182,7 @@ def export_package(destination, slots, updater_path):
         raise ValueError('Choose a new folder name; the export folder already exists.')
     updater_path = Path(updater_path)
     updater = updater_path.read_bytes()
-    if hashlib.sha256(updater).hexdigest() != UPDATER_SHA256:
-        raise ValueError('Updater must match the inspected Noble NB4+ EN 1.0.31-4 package.')
-    original = updater[RESOURCE_OFFSET:RESOURCE_OFFSET+RESOURCE_LENGTH]
+    original, profile = extract_reference(updater)
     theme = project_theme(slots)
     result = original
     reports = {}
@@ -210,7 +209,7 @@ def export_package(destination, slots, updater_path):
         cursor = end
     if result[cursor:-4] != original[cursor:-4]:
         raise AssertionError('Unexpected change outside wallpaper pixels')
-    report = dict(slots=reports, source_updater_sha256=UPDATER_SHA256,
+    report = dict(slots=reports, source_updater_sha256=profile['sha256'], reference_region=profile['region'],
                   data_sha256=hashlib.sha256(result).hexdigest(),
                   data_crc32=hex(struct.unpack_from('<I', result, len(result)-4)[0]),
                   width=WIDTH, height=HEIGHT, device_tested=False,
@@ -220,13 +219,13 @@ def export_package(destination, slots, updater_path):
     staging = Path(tempfile.mkdtemp(prefix='.nb4-export-', dir=destination.parent))
     try:
         (staging / 'FS_FG4_CN_Data.bin').write_bytes(result)
-        (staging / updater_path.name).write_bytes(updater)
+        (staging / profile['filename']).write_bytes(updater)
         for slot, preview in previews.items():
             preview.save(staging / f'{slot}_preview.png')
         save_project(staging / 'wallpapers.nb4project', slots)
         (staging / 'patch_report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
         (staging / 'READ ME.txt').write_text(
-            'Noble NB4+ EN 1.0.31-4 wallpaper package\n\n'
+            f'Noble NB4+ {profile["region"]} 1.0.31-4 wallpaper package\n\n'
             'Contains an unchanged original updater and modified external Data.bin.\n'
             'Firmware 1.0.31 only. This exported package has not been display tested on your device.\n'
             'The vendor updater external-data route has not been hardware tested.\n'
